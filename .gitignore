@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+
+datasets/
+.venv/
+__pycache__/
+*.pyc
+
+
+static/uploads/
+static/results/
+

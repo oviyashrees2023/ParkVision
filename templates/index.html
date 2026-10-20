@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0e1a2b">
+    <title>ParkVision | Smart Parking Dashboard</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Bricolage+Grotesque:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --asphalt: #0e1a2b;
+            --asphalt-2: #16263b;
+            --paint: #f5c542;
+            --teal: #0f766e;
+            --teal-dark: #115e59;
+            --teal-soft: #14b8a6;
+            --green: #16a34a;
+            --red: #dc2626;
+            --violet: #7c3aed;
+            --blue: #2563eb;
+
+            --bg: #eef2f7;
+            --surface: #ffffff;
+            --surface-2: #f6f8fb;
+            --text: #142033;
+            --muted: #64748b;
+            --border: #e1e7ef;
+            --shadow-sm: 0 1px 2px rgba(15,23,42,.05), 0 2px 8px rgba(15,23,42,.04);
+            --shadow-md: 0 10px 30px -8px rgba(15,23,42,.14);
+            --shadow-lg: 0 24px 60px -16px rgba(15,23,42,.28);
+
+            --green-bg: #dcfce7; --green-fg: #166534;
+            --red-bg: #fee2e2;   --red-fg: #991b1b;
+
+            --r-sm: 8px; --r-md: 14px; --r-lg: 22px;
+            --font: "Manrope", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+            --font-display: "Bricolage Grotesque", "Manrope", "Segoe UI", Arial, sans-serif;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0a1220;
+                --surface: #121e31;
+                --surface-2: #17263c;
+                --text: #e8eef7;
+                --muted: #93a4bb;
+                --border: #243650;
+                --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+                --shadow-md: 0 10px 30px -8px rgba(0,0,0,.55);
+                --green-bg: #12351f; --green-fg: #86efac;
+                --red-bg: #3b1616;   --red-fg: #fca5a5;
+            }
+        }
+
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            margin: 0;
+            font-family: var(--font);
+            background:
+                radial-gradient(900px 400px at 85% -5%, rgba(20,184,166,.10), transparent 60%),
+                var(--bg);
+            color: var(--text);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        ::selection { background: var(--teal-soft); color: #fff; }
+
+        :focus-visible {
+            outline: 3px solid var(--paint);
+            outline-offset: 3px;
+            border-radius: 6px;
+        }
+
+        /* ---------- Header: asphalt with painted bay lines ---------- */
+        header {
+            position: relative;
+            background:
+                repeating-linear-gradient(100deg, transparent 0 58px, rgba(255,255,255,.045) 58px 60px),
+                linear-gradient(135deg, var(--asphalt) 0%, var(--asphalt-2) 100%);
+            color: #fff;
+            padding: 26px 7%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            border-bottom: 4px solid var(--paint);
+            overflow: hidden;
+        }
+
+        header::after {
+            content: "";
+            position: absolute;
+            right: -80px; top: -120px;
+            width: 320px; height: 320px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(20,184,166,.35), transparent 65%);
+            pointer-events: none;
+        }
+
+        .brand { display: flex; align-items: center; gap: 16px; position: relative; z-index: 1; }
+
+        .brand-mark {
+            width: 52px; height: 52px;
+            display: grid; place-items: center;
+            background: var(--paint);
+            color: var(--asphalt);
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 30px;
+            border-radius: 14px;
+            box-shadow: 0 8px 20px -6px rgba(245,197,66,.55);
+            transform: rotate(-4deg);
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-family: var(--font-display);
+            font-size: 30px;
+            letter-spacing: -0.4px;
+            line-height: 1.1;
+        }
+
+        .brand p { margin: 5px 0 0; color: #b6c4d8; font-size: 14px; }
+
+        .header-badge {
+            position: relative; z-index: 1;
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 9px 16px;
+            border: 1px solid rgba(255,255,255,.22);
+            background: rgba(255,255,255,.07);
+            backdrop-filter: blur(8px);
+            border-radius: 999px;
+            font-size: 13px; font-weight: 600;
+            color: #e0ecff;
+        }
+
+        .pulse {
+            width: 9px; height: 9px; border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 0 0 rgba(74,222,128,.7);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            70% { box-shadow: 0 0 0 10px rgba(74,222,128,0); }
+            100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+        }
+
+        /* ---------- Layout ---------- */
+        main {
+            width: 100%;
+            max-width: 1250px;
+            margin: 38px auto;
+            padding: 0 22px 40px;
+            flex: 1;
+        }
+
+        .page-heading { margin-bottom: 28px; max-width: 680px; }
+
+        .page-heading h2 {
+            margin: 0 0 10px;
+            font-family: var(--font-display);
+            font-size: clamp(28px, 4vw, 40px);
+            letter-spacing: -0.8px;
+            line-height: 1.1;
+        }
+
+        .page-heading p { margin: 0; color: var(--muted); line-height: 1.7; }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-lg);
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .panel h3 { margin: 0 0 8px; font-size: 19px; letter-spacing: -0.2px; }
+
+        .panel-head {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            gap: 16px; flex-wrap: wrap;
+        }
+
+        .note { color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+
+        /* ---------- Steps ---------- */
+        .steps {
+            display: flex; gap: 10px; flex-wrap: wrap;
+            margin: 16px 0 0; padding: 0; list-style: none;
+        }
+
+        .steps li {
+            display: flex; align-items: center; gap: 8px;
+            padding: 7px 13px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            font-size: 13px; font-weight: 600; color: var(--muted);
+        }
+
+        .steps b {
+            width: 20px; height: 20px; display: grid; place-items: center;
+            border-radius: 50%; background: var(--teal); color: #fff; font-size: 11px;
+        }
+
+        /* ---------- Upload ---------- */
+        .upload-area {
+            position: relative;
+            margin-top: 22px;
+            padding: 38px 20px;
+            border: 2px dashed #a8b7c8;
+            border-radius: var(--r-md);
+            text-align: center;
+            background:
+                repeating-linear-gradient(90deg, transparent 0 78px, rgba(100,116,139,.07) 78px 80px),
+                var(--surface-2);
+            transition: border-color .2s, background-color .2s, transform .2s;
+        }
+
+        .upload-area.dragover {
+            border-color: var(--teal);
+            background-color: rgba(20,184,166,.10);
+            transform: scale(1.01);
+        }
+
+        .upload-area.has-file { border-style: solid; border-color: var(--teal-soft); }
+
+        .upload-icon {
+            width: 72px; height: 72px; margin: 0 auto 12px;
+            display: grid; place-items: center;
+            font-size: 34px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: var(--shadow-md);
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float { 50% { transform: translateY(-6px); } }
+
+        .upload-area h3 { font-family: var(--font-display); font-size: 22px; }
+        .upload-area p { color: var(--muted); line-height: 1.6; margin: 6px 0; }
+
+        .chips { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 10px 0 0; }
+
+        .chip {
+            font-size: 12px; font-weight: 700; padding: 4px 10px;
+            border-radius: 999px; background: var(--surface);
+            border: 1px solid var(--border); color: var(--muted);
+        }
+
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            margin: 22px auto;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--r-sm);
+            background: var(--surface);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        input[type="file"]::file-selector-button {
+            margin-right: 12px;
+            padding: 8px 14px;
+            border: none; border-radius: 6px;
+            background: var(--asphalt); color: #fff;
+            font-weight: 700; font-family: inherit; cursor: pointer;
+            transition: background .2s;
+        }
+
+        input[type="file"]::file-selector-button:hover { background: var(--teal); }
+
+        .preview {
+            display: none;
+            max-width: 420px;
+            margin: 0 auto 20px;
+            padding: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            box-shadow: var(--shadow-md);
+        }
+
+        .preview.show { display: block; animation: pop .35s ease; }
+        .preview img { display: block; width: 100%; max-height: 240px; object-fit: cover; border-radius: 9px; }
+
+        @keyframes pop { from { opacity: 0; transform: scale(.96); } }
+
+        button {
+            position: relative;
+            background: linear-gradient(135deg, var(--teal), var(--teal-dark));
+            color: #fff;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: .2px;
+            cursor: pointer;
+            box-shadow: 0 10px 22px -8px rgba(15,118,110,.7);
+            transition: transform .15s, box-shadow .2s, filter .2s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            filter: brightness(1.08);
+            box-shadow: 0 14px 26px -8px rgba(15,118,110,.8);
+        }
+
+        button:active:not(:disabled) { transform: translateY(0); }
+
+        button:disabled {
+            background: #94a3b8;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        button.loading::before {
+            content: "";
+            display: inline-block;
+            width: 14px; height: 14px; margin-right: 10px;
+            border: 2px solid rgba(255,255,255,.4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            vertical-align: -2px;
+            animation: spin .7s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #fileMessage { margin: 16px 0 0; }
+
+        .progress {
+            display: none;
+            height: 5px; max-width: 400px; margin: 16px auto 0;
+            background: var(--border); border-radius: 99px; overflow: hidden;
+        }
+
+        .progress.show { display: block; }
+
+        .progress span {
+            display: block; height: 100%; width: 40%;
+            background: linear-gradient(90deg, var(--teal-soft), var(--paint));
+            border-radius: 99px;
+            animation: slide 1.2s ease-in-out infinite;
+        }
+
+        @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+
+        /* ---------- Messages ---------- */
+        .message {
+            display: flex; gap: 12px; align-items: flex-start;
+            padding: 15px 18px;
+            margin: 20px 0;
+            border-radius: 12px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-left: 5px solid var(--green);
+            color: #065f46;
+            overflow-wrap: anywhere;
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .message::before { content: "✓"; font-weight: 800; }
+
+        .message.error {
+            background: #fef2f2;
+            border-color: #fecaca;
+            border-left-color: var(--red);
+            color: #991b1b;
+        }
+
+        .message.error::before { content: "!"; }
+
+        /* ---------- Stats ---------- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            position: relative;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            padding: 22px;
+            border-top: 4px solid #94a3b8;
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+        .stat-card::after {
+            content: "";
+            position: absolute; right: -30px; bottom: -30px;
+            width: 100px; height: 100px; border-radius: 50%;
+            background: currentColor; opacity: .06;
+        }
+
+        .stat-card.total    { border-top-color: var(--blue);   color: var(--blue); }
+        .stat-card.empty    { border-top-color: var(--green);  color: var(--green); }
+        .stat-card.occupied { border-top-color: var(--red);    color: var(--red); }
+        .stat-card.rate     { border-top-color: var(--violet); color: var(--violet); }
+
+        .stat-label { color: var(--muted); font-size: 14px; font-weight: 600; }
+
+        .stat-value {
+            margin-top: 10px;
+            font-family: var(--font-display);
+            font-size: 40px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .meter {
+            height: 6px; margin-top: 16px;
+            background: var(--border); border-radius: 99px; overflow: hidden;
+        }
+
+        .meter i {
+            display: block; height: 100%;
+            width: var(--w, 0%);
+            background: currentColor;
+            border-radius: 99px;
+            transform-origin: left;
+            animation: grow 1s .2s cubic-bezier(.2,.8,.2,1) both;
+        }
+
+        @keyframes grow { from { transform: scaleX(0); } }
+
+        /* ---------- Results ---------- */
+        .results-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+
+        .image-frame {
+            margin-top: 18px;
+            padding: 10px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+        }
+
+        .result-image {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-height: 650px;
+            object-fit: contain;
+            border-radius: 10px;
+            background: var(--surface-2);
+            cursor: zoom-in;
+        }
+
+        .legend {
+            display: flex; gap: 10px; flex-wrap: wrap;
+            margin: 16px 0 0; color: var(--muted); font-size: 14px;
+        }
+
+        .legend-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 12px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .dot { width: 11px; height: 11px; border-radius: 50%; }
+        .dot.green { background: var(--green); box-shadow: 0 0 0 4px rgba(22,163,74,.18); }
+        .dot.red   { background: var(--red);   box-shadow: 0 0 0 4px rgba(220,38,38,.18); }
+
+        /* ---------- Table ---------- */
+        .toolbar { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        .filter-btn {
+            padding: 8px 14px; font-size: 13px;
+            background: var(--surface-2); color: var(--muted);
+            border: 1px solid var(--border);
+            box-shadow: none; border-radius: 999px;
+        }
+
+        .filter-btn:hover:not(:disabled) { background: var(--surface-2); filter: none; transform: none; box-shadow: none; color: var(--text); }
+
+        .filter-btn.active { background: var(--asphalt); color: #fff; border-color: var(--asphalt); }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 20px;
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+            max-height: 560px;
+            overflow-y: auto;
+        }
+
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+
+        th, td { padding: 14px 18px; border-bottom: 1px solid var(--border); font-size: 14px; }
+
+        th {
+            position: sticky; top: 0; z-index: 1;
+            background: var(--surface-2);
+            color: var(--muted);
+            font-size: 12.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+        }
+
+        tbody tr { transition: background .15s; }
+        tbody tr:hover { background: var(--surface-2); }
+        tbody tr:last-child td { border-bottom: none; }
+        td:first-child { font-weight: 800; font-variant-numeric: tabular-nums; }
+
+        .status {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+        .status.empty    { background: var(--green-bg); color: var(--green-fg); }
+        .status.occupied { background: var(--red-bg);   color: var(--red-fg); }
+
+        .conf { display: flex; align-items: center; gap: 12px; min-width: 170px; font-variant-numeric: tabular-nums; font-weight: 700; }
+
+        .conf-bar { flex: 1; height: 7px; background: var(--border); border-radius: 99px; overflow: hidden; }
+
+        .conf-bar i {
+            display: block; height: 100%; width: var(--c, 0%);
+            background: linear-gradient(90deg, var(--teal-soft), var(--teal));
+            border-radius: 99px;
+        }
+
+        .empty-state { text-align: center; padding: 30px 10px; color: var(--muted); }
+
+        /* ---------- Lightbox ---------- */
+        .lightbox {
+            position: fixed; inset: 0; z-index: 50;
+            display: none; place-items: center;
+            padding: 24px;
+            background: rgba(6,12,22,.88);
+            backdrop-filter: blur(6px);
+            cursor: zoom-out;
+        }
+
+        .lightbox.open { display: grid; animation: pop .25s ease; }
+        .lightbox img { max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: var(--shadow-lg); }
+
+        /* ---------- Footer ---------- */
+        footer {
+            padding: 24px 20px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ---------- Entrance (single orchestrated moment) ---------- */
+        .stats-grid .stat-card { animation: rise .6s cubic-bezier(.2,.8,.2,1) both; }
+        .stats-grid .stat-card:nth-child(2) { animation-delay: .07s; }
+        .stats-grid .stat-card:nth-child(3) { animation-delay: .14s; }
+        .stats-grid .stat-card:nth-child(4) { animation-delay: .21s; }
+
+        @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 800px) {
+            .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 500px) {
+            header { padding: 20px; }
+            main { padding: 0 14px 30px; margin-top: 24px; }
+            .panel { padding: 19px; }
+            .stats-grid { gap: 10px; }
+            .stat-card { padding: 16px; }
+            .stat-value { font-size: 30px; }
+            .brand h1 { font-size: 25px; }
+            th, td { padding: 11px 12px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
+
+        @media print {
+            header, .upload-section, footer, .toolbar, .lightbox { display: none !important; }
+            body { background: #fff; }
+            .panel, .stat-card { box-shadow: none; break-inside: avoid; }
+            .table-wrap { max-height: none; overflow: visible; }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="brand">
+            <div class="brand-mark" aria-hidden="true">P</div>
+            <div>
+                <h1>ParkVision</h1>
+                <p>Smart parking-slot detection and occupancy monitoring</p>
+            </div>
+        </div>
+
+        <div class="header-badge"><span class="pulse"></span>AI Parking Dashboard</div>
+    </header>
+
+    <main>
+        <section class="page-heading">
+            <h2>Parking Analysis Dashboard</h2>
+            <p>
+                Upload a parking-lot image to detect parking spaces and
+                estimate their occupancy using your trained AI models.
+            </p>
+        </section>
+
+        <section class="panel upload-section">
+            <h3>Upload Parking Image</h3>
+            <p class="note">
+                Choose a clear image showing the parking area from a suitable
+                viewing angle.
+            </p>
+
+            <ol class="steps">
+                <li><b>1</b> Select image</li>
+                <li><b>2</b> Detect slots</li>
+                <li><b>3</b> Classify occupancy</li>
+            </ol>
+
+            <form
+                id="uploadForm"
+                method="POST"
+                enctype="multipart/form-data"
+            >
+                <div class="upload-area" id="dropZone">
+                    <div class="upload-icon">🅿️</div>
+                    <h3>Select a parking-lot image</h3>
+
+                    <p>
+                        Supported formats: JPG, JPEG, PNG and WebP.
+                        Maximum file size: 15 MB.
+                    </p>
+
+                    <div class="chips" aria-hidden="true">
+                        <span class="chip">JPG</span>
+                        <span class="chip">PNG</span>
+                        <span class="chip">WebP</span>
+                        <span class="chip">≤ 15 MB</span>
+                    </div>
+
+                    <input
+                        type="file"
+                        id="parkingImage"
+                        name="image"
+                        accept=".jpg,.jpeg,.png,.webp"
+                        required
+                    >
+
+                    <div class="preview" id="preview">
+                        <img id="previewImg" alt="Selected parking image preview">
+                    </div>
+
+                    <button
+                        type="submit"
+                        id="analyzeButton"
+                        disabled
+                    >
+                        Analyze Parking Lot
+                    </button>
+
+                    <div class="progress" id="progress" aria-hidden="true"><span></span></div>
+
+                    <p id="fileMessage" class="note" aria-live="polite">
+                        No image selected.
+                    </p>
+                </div>
+            </form>
+        </section>
+
+        {% if message %}
+            <div class="message {% if not result_url %}error{% endif %}" role="status">
+                {{ message }}
+            </div>
+        {% endif %}
+
+        {% if result_url %}
+            <section class="stats-grid" id="results">
+                <div class="stat-card total">
+                    <div class="stat-label">Total Detected Slots</div>
+                    <div class="stat-value">{{ total_slots }}</div>
+                    <div class="meter"><i style="--w: 100%"></i></div>
+                </div>
+
+                <div class="stat-card empty">
+                    <div class="stat-label">Empty Slots</div>
+                    <div class="stat-value">{{ empty_slots }}</div>
+                    <div class="meter"><i style="--w: {% if total_slots %}{{ (empty_slots / total_slots * 100)|round(1) }}{% else %}0{% endif %}%"></i></div>
+                </div>
+
+                <div class="stat-card occupied">
+                    <div class="stat-label">Occupied Slots</div>
+                    <div class="stat-value">{{ occupied_slots }}</div>
+                    <div class="meter"><i style="--w: {% if total_slots %}{{ (occupied_slots / total_slots * 100)|round(1) }}{% else %}0{% endif %}%"></i></div>
+                </div>
+
+                <div class="stat-card rate">
+                    <div class="stat-label">Occupancy Rate</div>
+                    <div class="stat-value">{{ occupancy_percentage }}%</div>
+                    <div class="meter"><i style="--w: {{ occupancy_percentage }}%"></i></div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <h3>Detection Results</h3>
+                <p class="note">
+                    Each box represents a detected slot. Its color indicates
+                    the classifier's predicted occupancy. Click the image to enlarge it.
+                </p>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <span class="dot green"></span>
+                        Empty
+                    </div>
+
+                    <div class="legend-item">
+                        <span class="dot red"></span>
+                        Occupied
+                    </div>
+                </div>
+
+                <div class="results-grid">
+                    <div class="image-frame">
+                        <img
+                            class="result-image"
+                            id="resultImage"
+                            src="{{ result_url }}"
+                            alt="Parking image with detected slots and occupancy labels"
+                        >
+                    </div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-head">
+                    <h3>Individual Slot Results</h3>
+
+                    {% if slot_details %}
+                        <div class="toolbar" role="group" aria-label="Filter slots by status">
+                            <button type="button" class="filter-btn active" data-filter="all">All</button>
+                            <button type="button" class="filter-btn" data-filter="empty">Empty</button>
+                            <button type="button" class="filter-btn" data-filter="occupied">Occupied</button>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if slot_details %}
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Slot</th>
+                                    <th>Predicted Status</th>
+                                    <th>Classification Confidence</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="slotBody">
+                                {% for slot in slot_details %}
+                                    <tr data-status="{{ slot.status|lower }}">
+                                        <td>#{{ slot.number }}</td>
+
+                                        <td>
+                                            <span class="status {{ slot.status|lower }}">
+                                                {{ slot.status }}
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <div class="conf" style="--c: {{ slot.confidence }}%">
+                                                <div class="conf-bar"><i></i></div>
+                                                <span>{{ slot.confidence }}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="empty-state">No parking slots were detected in this image.</p>
+                {% endif %}
+            </section>
+        {% endif %}
+    </main>
+
+    <div class="lightbox" id="lightbox" role="dialog" aria-label="Enlarged result image">
+        <img id="lightboxImg" alt="Enlarged parking analysis result">
+    </div>
+
+    <footer>
+        ParkVision · AI-powered parking-slot analysis
+    </footer>
+
+    <script>
+        const imageInput = document.getElementById("parkingImage");
+        const analyzeButton = document.getElementById("analyzeButton");
+        const fileMessage = document.getElementById("fileMessage");
+        const uploadForm = document.getElementById("uploadForm");
+        const dropZone = document.getElementById("dropZone");
+        const preview = document.getElementById("preview");
+        const previewImg = document.getElementById("previewImg");
+        const progress = document.getElementById("progress");
+
+        const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+        ];
+
+        function resetPreview() {
+            preview.classList.remove("show");
+            dropZone.classList.remove("has-file");
+            if (previewImg.src.startsWith("blob:")) URL.revokeObjectURL(previewImg.src);
+            previewImg.removeAttribute("src");
+        }
+
+        imageInput.addEventListener("change", function () {
+            const file = this.files[0];
+
+            analyzeButton.disabled = true;
+            resetPreview();
+
+            if (!file) {
+                fileMessage.textContent = "No image selected.";
+                return;
+            }
+
+            if (!allowedTypes.includes(file.type)) {
+                fileMessage.textContent =
+                    "Please select a JPG, PNG or WebP image.";
+                this.value = "";
+                return;
+            }
+
+            if (file.size > 15 * 1024 * 1024) {
+                fileMessage.textContent =
+                    "The image exceeds the 15 MB limit.";
+                this.value = "";
+                return;
+            }
+
+            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            fileMessage.textContent = "Selected: " + file.name + " (" + sizeMB + " MB)";
+            previewImg.src = URL.createObjectURL(file);
+            preview.classList.add("show");
+            dropZone.classList.add("has-file");
+            analyzeButton.disabled = false;
+        });
+
+        /* Drag and drop onto the upload area */
+        ["dragenter", "dragover"].forEach(function (evt) {
+            dropZone.addEventListener(evt, function (e) {
+                e.preventDefault();
+                dropZone.classList.add("dragover");
+            });
+        });
+
+        ["dragleave", "drop"].forEach(function (evt) {
+            dropZone.addEventListener(evt, function (e) {
+                e.preventDefault();
+                dropZone.classList.remove("dragover");
+            });
+        });
+
+        dropZone.addEventListener("drop", function (e) {
+            if (e.dataTransfer && e.dataTransfer.files.length) {
+                imageInput.files = e.dataTransfer.files;
+                imageInput.dispatchEvent(new Event("change"));
+            }
+        });
+
+        uploadForm.addEventListener("submit", function (event) {
+            if (!imageInput.files.length) {
+                event.preventDefault();
+                fileMessage.textContent = "Please select an image.";
+                return;
+            }
+
+            fileMessage.textContent =
+                "Analyzing image. Please wait...";
+            analyzeButton.textContent = "Analyzing...";
+            analyzeButton.classList.add("loading");
+            analyzeButton.disabled = true;
+            progress.classList.add("show");
+        });
+
+        /* Results: filter table and enlarge image */
+        const filterButtons = document.querySelectorAll(".filter-btn");
+        filterButtons.forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                const filter = btn.dataset.filter;
+                filterButtons.forEach(function (b) { b.classList.toggle("active", b === btn); });
+                document.querySelectorAll("#slotBody tr").forEach(function (row) {
+                    row.hidden = filter !== "all" && row.dataset.status !== filter;
+                });
+            });
+        });
+
+        const resultImage = document.getElementById("resultImage");
+        const lightbox = document.getElementById("lightbox");
+        const lightboxImg = document.getElementById("lightboxImg");
+
+        if (resultImage) {
+            resultImage.addEventListener("click", function () {
+                lightboxImg.src = resultImage.src;
+                lightbox.classList.add("open");
+            });
+            document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+
+        lightbox.addEventListener("click", function () { lightbox.classList.remove("open"); });
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") lightbox.classList.remove("open");
+        });
+    </script>
+</body>
+</html>
